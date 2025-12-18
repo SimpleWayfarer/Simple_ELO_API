@@ -1,7 +1,21 @@
 import os
 import psycopg2
+import time
 from flask import Flask, request, jsonify
 from elo import update_elo
+from prometheus_client import Counter, Histogram, generate_latest
+
+REQUEST_COUNT = Counter(
+    'http_requests_total',
+    'Total HTTP requests',
+    ['method', 'endpoint']
+)
+
+REQUEST_LATENCY = Histogram(
+    'http_request_duration_seconds',
+    'Request latency',
+    ['endpoint']
+)
 
 app = Flask(__name__)
 
@@ -12,6 +26,20 @@ def get_conn():
         password=os.getenv("DATABASE_PASSWORD"),
         dbname=os.getenv("DATABASE_NAME")
     )
+
+@app.before_request
+def before_request():
+    request._start_time = time.time()
+
+@app.after_request
+def after_request(response):
+    REQUEST_COUNT.labels(
+        request.method, request.path
+    ).inc()
+    REQUEST_LATENCY.labels(
+        request.path
+    ).observe(time.time() - request._start_time)
+    return response
 
 @app.post("/users")
 def add_user():
@@ -77,6 +105,10 @@ def process_match():
         name_a: new_a,
         name_b: new_b
     })
+
+@app.get("/metrics")
+def metrics():
+    return generate_latest(), 200, {'Content-Type': 'text/plain'}
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)

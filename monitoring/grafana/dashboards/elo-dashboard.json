@@ -1,0 +1,76 @@
+{
+  "id": null,
+  "uid": "elo-api-dashboard",
+  "title": "ELO API – Monitoring",
+  "tags": ["elo", "api", "monitoring"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "5s",
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Total HTTP Requests",
+      "gridPos": { "x": 0, "y": 0, "w": 8, "h": 6 },
+      "targets": [
+        {
+          "expr": "sum(http_requests_total)",
+          "refId": "A"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PROMETHEUS_DS"
+      }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Requests per Second",
+      "gridPos": { "x": 8, "y": 0, "w": 8, "h": 6 },
+      "targets": [
+        {
+          "expr": "rate(http_requests_total[1m])",
+          "refId": "A"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PROMETHEUS_DS"
+      }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Request Latency (avg)",
+      "gridPos": { "x": 16, "y": 0, "w": 8, "h": 6 },
+      "targets": [
+        {
+          "expr": "rate(http_request_duration_seconds_sum[1m]) / rate(http_request_duration_seconds_count[1m])",
+          "refId": "A"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PROMETHEUS_DS"
+      }
+    },
+    {
+      "id": 4,
+      "type": "logs",
+      "title": "Backend Logs",
+      "gridPos": { "x": 0, "y": 6, "w": 24, "h": 10 },
+      "targets": [
+        {
+          "expr": "{container_name=\"elo-backend\"}",
+          "refId": "A"
+        }
+      ],
+      "datasource": {
+        "type": "loki",
+        "uid": "LOKI_DS"
+      }
+    }
+  ]
+}
